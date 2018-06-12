@@ -1,0 +1,140 @@
+---
+title: "jp_preview"
+author: "MacKenzie Olson"
+date: "6/11/2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(plotly)
+library(plyr)
+```
+
+## Ugly-ass plots
+
+```{r, echo=FALSE}
+mydata <- read.csv("emetophobia_survey2.csv", header=TRUE, sep=",")
+
+### LOCATION: WORLD CLOROPLOTH 
+country_count = count(mydata, "Country")
+country_count = country_count[-1,]
+country_count$Country_Code <- c("AUS", "BEL", "BRA", "CAN", "DNK", "FIN", "DEU", "MEX", "NLD", "NOR", "POL", "SWE", "CHE", "GBR", "USA")
+
+# light grey boundaries
+l <- list(color = toRGB("grey"), width = 0.5)
+
+# specify map projection/options
+g <- list(
+  showframe = FALSE,
+  showcoastlines = FALSE,
+  projection = list(type = 'Mercator')
+)
+
+world_cloro <- plot_geo(country_count) %>%
+  add_trace(
+    z = ~freq, color = ~freq, colors = 'Purples',
+    text = ~Country, locations = ~Country_Code, marker = list(line = l)
+  ) %>%
+  colorbar(title = 'Number of Emetophobes') %>%
+  layout(
+    title = 'Emetophobes By Location',
+    geo = g
+  )
+world_cloro
+
+### LOCATION: PIE CHART 
+location_pie <- plot_ly(country_count, labels = ~Country, values = ~freq, type = 'pie') %>%
+  layout(title = 'Emetophobes By Location',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+location_pie
+
+### GENDER: BAR CHART
+gender_count = count(mydata, "Gender")
+total = sum(gender_count$freq)
+rounded_vals = round((gender_count$freq / total * 100), 2)
+print(rounded_vals)
+
+gender_chart <- plot_ly(gender_count, x = ~Gender, y = ~freq, text = paste(rounded_vals, "%"), type = 'bar',
+             marker = list(color = 'Set3',
+                           line = list(color = 'rgb(8,48,107)',
+                                       width = 1.5))) %>%
+  layout(title = "Emetophobes By Gender",
+         xaxis = list(title = "Gender"),
+         yaxis = list(title = "Count"))
+
+gender_chart
+
+### AGE: BAR CHART
+mydata$Age <- as.character(mydata$Age)
+mydata$Age[mydata$Age == "Under 18"] <- "0 - 17"
+
+age_count = count(mydata, "Age")
+age_count = age_count[-1,]
+
+
+total = sum(age_count$freq)
+rounded_vals = round((age_count$freq / total * 100), 2)
+
+age_chart <- plot_ly(age_count, x = ~Age, y = ~freq, text = paste(rounded_vals, "%"), type = 'bar',
+                        marker = list(color = 'Set3',
+                                      line = list(color = 'rgb(8,48,107)',
+                                                  width = 1.5))) %>%
+  layout(title = "Emetophobes By Age",
+         xaxis = list(title = "Age"),
+         yaxis = list(title = "Count"))
+
+age_chart
+
+### FORM: PIE CHART
+form_count = count(mydata, "Form")
+form_count$Form = c("Primary", "Secondary")
+
+form_pie <- plot_ly(form_count, labels = ~Form, values = ~freq, type = 'pie') %>%
+  layout(title = 'Primary vs Secondary Emetophobia',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+form_pie
+
+### DURATION: BAR CHART
+duration_count = count(mydata, "Duration")
+total = sum(duration_count$freq)
+duration_count$percentage <- round(duration_count$freq / total * 100, 2)
+duration_count$cum_percentage <- cumsum(duration_count$percentage)
+
+
+duration_chart <- plot_ly(duration_count, x = ~Duration, y = ~freq, text = paste(duration_count$percentage, "%"), type = 'bar',
+                     marker = list(color = 'Set3',
+                                   line = list(color = 'rgb(8,48,107)',
+                                               width = 1.5))) %>%
+  layout(title = "Length of Emetophobia History (Years)",
+         xaxis = list(title = ""),
+         yaxis = list(title = "Count"))
+
+duration_chart
+
+### DURATION: CMF
+duration_lineplot <- plot_ly(duration_count, x = ~Duration, 
+                             y = ~cum_percentage, name = 'trace 0', type = 'scatter', mode = 'lines+markers') %>% 
+                    layout(title = "Cumulative Mass Function: Length of Emetophobia History (Years)",
+                           xaxis = list(title = ""),
+                           yaxis = list(title = "Cumulative Frequency"))
+duration_lineplot
+
+
+### REMISSION: PIE CHART
+remission_count = count(mydata, "Remission")
+remission_count = remission_count[-1,]
+
+remission_pie <- plot_ly(remission_count, labels = ~Remission, values = ~freq, type = 'pie') %>%
+  layout(title = 'Remission of Emetophobic Survey Participants',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+remission_pie
+```

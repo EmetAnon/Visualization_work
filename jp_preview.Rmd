@@ -3,8 +3,7 @@ title: "jp_preview"
 author: "MacKenzie Olson"
 date: "6/11/2018"
 output:
-  html_document: default
-  pdf_document: default
+  rmarkdown::github_document
 ---
 
 ```{r setup, include=FALSE}
